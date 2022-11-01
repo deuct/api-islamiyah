@@ -2,13 +2,16 @@ import { QueryTypes } from "sequelize";
 import db from "../config/Database.js";
 import Image from "../models/ImgModel.js";
 
+// Insert image
 export const uploadImg = async (req, res) => {
   try {
+    var valueId = req.body.value_id.replace(/[^a-zA-Z0-9 ]/g, "");
     let img = await Image.create({
       imgpost_dir: req.file.path,
       imgpost_name: req.file.filename,
-      imgpost_for: 4,
+      imgpost_for: valueId,
     });
+    console.log(img);
     res.status(201).json({
       message: "success added photo",
       data: img,
@@ -16,7 +19,11 @@ export const uploadImg = async (req, res) => {
   } catch (error) {
     console.log(error);
   }
+  // console.log(req);
+  console.log("=======================");
+  // console.log(valueId);
   console.log(req.file);
+  console.log(req.body.value_id);
 };
 
 export const showImg = async (req, res) => {

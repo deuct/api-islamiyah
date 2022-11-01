@@ -10,7 +10,7 @@ const Jobs = db.define(
       type: DataTypes.STRING,
     },
     company_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
       primaryKey: true,
     },
@@ -23,7 +23,7 @@ const Jobs = db.define(
     company_city: {
       type: DataTypes.STRING,
     },
-    job_category: {
+    job_title: {
       type: DataTypes.STRING,
     },
     job_status: {

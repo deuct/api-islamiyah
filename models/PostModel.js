@@ -7,11 +7,14 @@ const Posts = db.define(
   "post",
   {
     post_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
       primaryKey: true,
     },
     post_name: {
+      type: DataTypes.STRING,
+    },
+    post_status: {
       type: DataTypes.STRING,
     },
     post_type: {
