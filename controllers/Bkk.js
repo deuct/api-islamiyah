@@ -2,6 +2,7 @@ import Jobs from "../models/BKKModel.js";
 import { validationResult } from "express-validator";
 import db from "../config/Database.js";
 import { QueryTypes } from "sequelize";
+import * as fs from "fs";
 
 // Get all job for listing
 export const getJobs = async (req, res) => {
@@ -69,7 +70,7 @@ export const insertJob = async (req, res) => {
 export const getJobId = async (req, res) => {
   try {
     const [result, metadata] = await db.query(
-      "SELECT company_id FROM jobs_bkk ORDER BY company_id DESC LIMIT 1",
+      "SELECT company_id FROM jobs_bkk ORDER BY createdAt DESC LIMIT 1",
       {
         type: QueryTypes.SELECT,
       }
@@ -78,7 +79,6 @@ export const getJobId = async (req, res) => {
   } catch (error) {
     console.log(error);
   }
-  console.log(res);
 };
 
 // Listing jobs for dashboard
@@ -89,7 +89,6 @@ export const listingJobDashboard = async (req, res) => {
     var search = req.query.search_query || "";
     search = search.replace(/[^\w\s]/gi, "");
     const offset = limit * page;
-    // var postType = req.query.post_type || "";
     var jobStatus = req.query.job_status || "";
 
     if (jobStatus === "") {
@@ -104,7 +103,7 @@ export const listingJobDashboard = async (req, res) => {
         }
       );
       var result = await db.query(
-        "SELECT company_id, company_name, job_title, job_status, job_short_desc, CAST(createdAt AS DATE) AS createdAt FROM jobs_bkk WHERE company_name LIKE :search OR job_title LIKE :search GROUP BY company_id  ORDER BY jobs_bkk.createdAt ASC LIMIT :limit OFFSET :offset",
+        "SELECT company_id, company_logo, company_name, job_title, job_status, job_short_desc, CAST(createdAt AS DATE) AS createdAt FROM jobs_bkk WHERE company_name LIKE :search OR job_title LIKE :search GROUP BY company_id  ORDER BY jobs_bkk.createdAt ASC LIMIT :limit OFFSET :offset",
         {
           replacements: {
             search: "%" + search + "%",
@@ -116,18 +115,17 @@ export const listingJobDashboard = async (req, res) => {
       );
     } else {
       var totalRows = await db.query(
-        "SELECT CONVERT(COUNT (*), CHAR) as totalRows FROM jobs_bkk WHERE job_title LIKE :search OR company_name LIKE :search AND job_status LIKE :jobStatus",
+        "SELECT CONVERT(COUNT (*), CHAR) as totalRows FROM jobs_bkk WHERE (job_title LIKE :search OR company_name LIKE :search) AND job_status = :jobStatus",
         {
-          replacements: { search: "%" + search + "%" },
+          replacements: { search: "%" + search + "%", jobStatus: jobStatus },
           type: QueryTypes.SELECT,
           raw: true,
           plain: true,
           nest: true,
-          jobStatus: jobStatus,
         }
       );
       var result = await db.query(
-        "SELECT company_id, company_name, job_title, job_status, job_short_desc, CAST(createdAt AS DATE) AS createdAt FROM jobs_bkk WHERE company_name LIKE :search OR job_title LIKE :search AND job_status = :jobStatus GROUP BY company_id  ORDER BY jobs_bkk.createdAt ASC LIMIT :limit OFFSET :offset",
+        "SELECT company_id, company_logo, company_name, job_title, job_status, job_short_desc, CAST(createdAt AS DATE) AS createdAt FROM jobs_bkk WHERE (company_name LIKE :search OR job_title LIKE :search) AND job_status = :jobStatus GROUP BY company_id  ORDER BY jobs_bkk.createdAt ASC LIMIT :limit OFFSET :offset",
         {
           replacements: {
             search: "%" + search + "%",
@@ -151,6 +149,30 @@ export const listingJobDashboard = async (req, res) => {
       totalRows: totalRowsRes,
       totalPage: totalPage,
     });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Delete Job
+export const deleteJob = async (req, res) => {
+  try {
+    const jobId = req.query.job_id;
+    const jobImg = req.query.job_img;
+
+    fs.unlink(jobImg, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+
+    const [result, metadata] = await db.query(
+      "DELETE FROM jobs_bkk WHERE company_id = :jobId",
+      {
+        replacements: { jobId: jobId, type: QueryTypes.DELETE },
+      }
+    );
+    res.json(result);
   } catch (error) {
     console.log(error);
   }

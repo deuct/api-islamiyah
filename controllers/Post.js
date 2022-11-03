@@ -1,30 +1,13 @@
 import Posts from "../models/PostModel.js";
 import { Sequelize, QueryTypes, json } from "sequelize";
 import db from "../config/Database.js";
-import User from "../models/UserModel.js";
+import * as fs from "fs";
 
-// export const getPosts = async (req, res) => {
-//   try {
-//     // const posts = await db.query("SELECT * FROM post ", {
-//     //   type: QueryTypes.SELECT,
-//     // });
-//     // const posts = await db.query(
-//     //   "SELECT distinct post.post_name, imgpost.imgpost_dir FROM post RIGHT JOIN imgpost ON imgpost_for = post_id"
-//     // );
-//     const [result, metadata] = await db.query(
-//       "SELECT post.post_id, post.post_name, post.post_type, post.post_shortdesc, post.post_desc, post.createdAt,imgpost.imgpost_for, imgpost.imgpost_dir FROM post JOIN imgpost ON imgpost.imgpost_for = post.post_id GROUP BY post.post_id ORDER BY post.createdAt "
-//     );
-//     res.json(result);
-//     // res.json(posts);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
-
+// Get id post
 export const getIdPost = async (req, res) => {
   try {
     const [result, metadata] = await db.query(
-      "SELECT post_id FROM post ORDER BY post_id DESC LIMIT 1",
+      "SELECT post_id FROM post ORDER BY createdAt DESC LIMIT 1",
       {
         type: QueryTypes.SELECT,
       }
@@ -35,6 +18,7 @@ export const getIdPost = async (req, res) => {
   }
 };
 
+// Get all post
 export const getPostSecond = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 0;
@@ -122,6 +106,7 @@ export const getPostSecond = async (req, res) => {
   }
 };
 
+// Get single post
 export const getOnePost = async (req, res) => {
   try {
     const [result, metadata] = await db.query(
@@ -136,6 +121,7 @@ export const getOnePost = async (req, res) => {
   }
 };
 
+// get img every post
 export const getImgPerPost = async (req, res) => {
   try {
     const [result, metadata] = await db.query(
@@ -150,6 +136,7 @@ export const getImgPerPost = async (req, res) => {
   }
 };
 
+// get category every post
 export const getCategoryPerPost = async (req, res) => {
   try {
     const [result, metadata] = await db.query(
@@ -238,6 +225,7 @@ export const listingPostDashboard = async (req, res) => {
   }
 };
 
+// Insert post
 export const insertPost = async (req, res) => {
   try {
     let post = await Posts.create({
@@ -258,4 +246,58 @@ export const insertPost = async (req, res) => {
   }
   console.log(req.body.data);
   console.log(req.body.data.postCode);
+};
+
+// Delete Single Post
+export const deletePost = async (req, res) => {
+  try {
+    const postId = req.params.postid;
+
+    const result = await db.query("DELETE FROM post WHERE post_id = :postId", {
+      replacements: { postId: postId },
+      type: QueryTypes.DELETE,
+    });
+
+    const resultCategory = await db.query(
+      "DELETE FROM categorypost WHERE categorypost_for = :postId",
+      {
+        replacements: {
+          postId: postId,
+        },
+        type: QueryTypes.DELETE,
+      }
+    );
+    res.status(201).json(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Delete Img Single Post
+export const deleteImgPost = async (req, res) => {
+  try {
+    const idImg = req.params.imgpostfor_id;
+    const getImgDelete = await db.query(
+      "SELECT imgpost_dir FROM imgpost WHERE imgpost_for = :idImg",
+      {
+        replacements: {
+          idImg: idImg,
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+    getImgDelete.map((imgdir) => {
+      console.log(imgdir.imgpost_dir);
+      fs.unlink(imgdir.imgpost_dir, (err) => {
+        if (err) {
+          console.log(err);
+        }
+      });
+    });
+    res.status(201).json({
+      message: "success deleted image post",
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };

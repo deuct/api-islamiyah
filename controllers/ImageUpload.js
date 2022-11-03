@@ -19,9 +19,7 @@ export const uploadImg = async (req, res) => {
   } catch (error) {
     console.log(error);
   }
-  // console.log(req);
   console.log("=======================");
-  // console.log(valueId);
   console.log(req.file);
   console.log(req.body.value_id);
 };
