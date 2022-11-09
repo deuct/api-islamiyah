@@ -21,6 +21,23 @@ export const getStaff = async (req, res) => {
   }
 };
 
+// Get single staff by id
+export const getOneStaff = async (req, res) => {
+  try {
+    const staffId = req.params.staffid;
+    const staff = await db.query(
+      "SELECT * FROM staff WHERE staff_id = :staffId",
+      {
+        replacements: { staffId: staffId },
+        type: QueryTypes.SELECT,
+      }
+    );
+    res.json({ result: staff });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 // Get last id of staff
 export const getStaffId = async (req, res) => {
   try {
@@ -30,13 +47,13 @@ export const getStaffId = async (req, res) => {
         type: QueryTypes.SELECT,
       }
     );
-    res.json(result);
+    res.status(201).json(result);
   } catch (error) {
     console.log(error);
   }
 };
 
-// Insert new teacher
+// Insert new staff
 export const insertStaff = async (req, res) => {
   try {
     let staff = await Staffs.create({
@@ -54,7 +71,53 @@ export const insertStaff = async (req, res) => {
   console.log(req.path);
 };
 
-// Listing teacher for dashboard
+// Update staff current
+export const updateStaff = async (req, res) => {
+  try {
+    const staffId = req.body.staffId;
+    const staffName = req.body.staffName;
+    const staffDepartment = req.body.staffDepartment;
+    const staffStatus = req.body.staffStatus;
+    var staffPhotoDir = "";
+    if (req.body.isNewImage === "true") {
+      console.log("true");
+      staffPhotoDir = req.file.path;
+      const updStaffDb = await db.query(
+        "UPDATE staff SET staff_name = :staffName, staff_department = :staffDepartment, staff_status = :staffStatus, staff_photo_dir = :staffPhotoDir WHERE staff_id = :staffId",
+        {
+          replacements: {
+            staffId: staffId,
+            staffName: staffName,
+            staffDepartment: staffDepartment,
+            staffStatus: staffStatus,
+            staffPhotoDir: staffPhotoDir,
+          },
+          type: QueryTypes.UPDATE,
+        }
+      );
+    } else if (req.body.isNewImage === "false") {
+      staffPhotoDir = "";
+      console.log("false");
+      const updStaffDb = await db.query(
+        "UPDATE staff SET staff_name = :staffName, staff_department = :staffDepartment, staff_status = :staffStatus WHERE staff_id = :staffId",
+        {
+          replacements: {
+            staffId: staffId,
+            staffName: staffName,
+            staffDepartment: staffDepartment,
+            staffStatus: staffStatus,
+          },
+          type: QueryTypes.UPDATE,
+        }
+      );
+    }
+    res.status(200).json({ message: "data success sended to server" });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Listing staff for dashboard
 export const listingStaffDashboard = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 0;
@@ -149,6 +212,30 @@ export const deleteStaff = async (req, res) => {
       }
     );
     res.json(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Delete current image
+export const deleteCurrImg = async (req, res) => {
+  try {
+    const staffImg = req.query.staff_img;
+    const staffId = req.query.staff_id;
+
+    const deleteImgDb = await db.query(
+      "UPDATE staff SET staff_photo_dir = '' WHERE staff_id = :staffId AND staff_photo_dir = :staffImg ",
+      {
+        replacements: { staffImg: staffImg, staffId: staffId },
+        type: QueryTypes.UPDATE,
+      }
+    );
+    fs.unlink(staffImg, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+    res.status(200).json({ message: "data success sended to server" });
   } catch (error) {
     console.log(error);
   }

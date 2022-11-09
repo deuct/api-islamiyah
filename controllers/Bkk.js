@@ -30,12 +30,21 @@ export const getJobs = async (req, res) => {
 // Get single job by id
 export const getJobById = async (req, res) => {
   try {
-    const response = await Jobs.findOne({
-      where: {
-        company_id: req.params.company_id,
-      },
-    });
-    res.status(200).json(response);
+    // const response = await Jobs.findOne({
+    //   where: {
+    //     company_id: req.params.company_id,
+    //   },
+    // });
+    const companyId = req.params.company_id;
+    console.log(companyId);
+    const response = await db.query(
+      "SELECT * FROM jobs_bkk WHERE company_id = :companyId",
+      { replacements: { companyId: companyId }, type: QueryTypes.SELECT }
+    );
+    res.json({ result: response });
+    console.log("================");
+    console.log(companyId);
+    console.log("================");
   } catch (error) {
     console.log(error.message);
   }
@@ -173,6 +182,92 @@ export const deleteJob = async (req, res) => {
       }
     );
     res.json(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Update job current
+export const updateJob = async (req, res) => {
+  try {
+    const companyId = req.body.companyId;
+    const companyName = req.body.companyName;
+    const jobTitle = req.body.jobTitle;
+    const jobStatus = req.body.jobStatus;
+    const companyCity = req.body.companyCity;
+    const companyAddress = req.body.companyAddress;
+    const jobRequirement = req.body.jobRequirement;
+    const jobShortDesc = req.body.shortDesc;
+    const description = req.body.description;
+
+    var companyLogo = "";
+    if (req.body.isNewImage === "true") {
+      console.log("true");
+      companyLogo = req.file.path;
+      const updCompanyDb = await db.query(
+        "UPDATE jobs_bkk SET company_id = :companyId, company_name = :companyName, company_address = :companyAddress, company_city = :companyCity, job_title = :jobTitle, job_status = :jobStatus, job_short_desc = :jobShortDesc, job_desc = :description, job_requirement = :jobRequirement, company_logo = :companyLogo  WHERE company_id = :companyId",
+        {
+          replacements: {
+            companyLogo: companyLogo,
+            companyId: companyId,
+            companyName: companyName,
+            jobTitle: jobTitle,
+            jobStatus: jobStatus,
+            companyCity: companyCity,
+            companyAddress: companyAddress,
+            jobRequirement: jobRequirement,
+            jobShortDesc: jobShortDesc,
+            description: description,
+          },
+          type: QueryTypes.UPDATE,
+        }
+      );
+    } else if (req.body.isNewImage === "false") {
+      companyLogo = "";
+      console.log("false");
+      const updTeacherDb = await db.query(
+        "UPDATE jobs_bkk SET company_id = :companyId, company_name = :companyName, company_address = :companyAddress, company_city = :companyCity, job_title = :jobTitle, job_status = :jobStatus, job_short_desc = :jobShortDesc, job_desc = :description, job_requirement = :jobRequirement WHERE company_id = :companyId",
+        {
+          replacements: {
+            companyId: companyId,
+            companyName: companyName,
+            jobTitle: jobTitle,
+            jobStatus: jobStatus,
+            companyCity: companyCity,
+            companyAddress: companyAddress,
+            jobRequirement: jobRequirement,
+            jobShortDesc: jobShortDesc,
+            description: description,
+          },
+          type: QueryTypes.UPDATE,
+        }
+      );
+    }
+    res.status(200).json({ message: "data success sended to server" });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Delete current image
+export const deleteCurrImgJob = async (req, res) => {
+  try {
+    const companyLogo = req.query.company_logo;
+    const companyId = req.query.company_id;
+
+    const deleteImgDb = await db.query(
+      "UPDATE jobs_bkk SET company_logo = '' WHERE company_id = :companyId AND company_logo = :companyLogo ",
+      {
+        replacements: { companyLogo: companyLogo, companyId: companyId },
+        type: QueryTypes.UPDATE,
+      }
+    );
+    fs.unlink(companyLogo, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+    res.status(200).json({ message: "data success sended to server" });
   } catch (error) {
     console.log(error);
   }

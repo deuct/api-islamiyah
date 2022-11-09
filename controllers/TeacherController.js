@@ -36,6 +36,23 @@ export const getTeacherId = async (req, res) => {
   }
 };
 
+// Get single teacher by id
+export const getOneTeacher = async (req, res) => {
+  try {
+    const teacherId = req.params.teacherid;
+    const teacher = await db.query(
+      "SELECT * FROM teachers WHERE teacher_id = :teacherId",
+      {
+        replacements: { teacherId: teacherId },
+        type: QueryTypes.SELECT,
+      }
+    );
+    res.json({ result: teacher });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 // Insert new teacher
 export const insertTeacher = async (req, res) => {
   try {
@@ -126,6 +143,82 @@ export const listingTeacherDashboard = async (req, res) => {
       totalRows: totalRowsRes,
       totalPage: totalPage,
     });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Update teacher current
+export const updateTeacher = async (req, res) => {
+  try {
+    const teacherId = req.body.teacherId;
+    const teacherName = req.body.teacherName;
+    const teacherMatpel = req.body.teacherMatpel;
+    const teacherStatus = req.body.teacherStatus;
+    console.log("=========================");
+    console.log(teacherId);
+    console.log(teacherName);
+    console.log(teacherMatpel);
+    console.log(teacherStatus);
+    console.log("=========================");
+    var teacherPhotoDir = "";
+    if (req.body.isNewImage === "true") {
+      console.log("true");
+      teacherPhotoDir = req.file.path;
+      const updTeacherDb = await db.query(
+        "UPDATE teachers SET teacher_name = :teacherName, teacher_matpel = :teacherMatpel, teacher_status = :teacherStatus, teacher_photo_dir = :teacherPhotoDir WHERE teacher_id = :teacherId",
+        {
+          replacements: {
+            teacherId: teacherId,
+            teacherName: teacherName,
+            teacherMatpel: teacherMatpel,
+            teacherStatus: teacherStatus,
+            teacherPhotoDir: teacherPhotoDir,
+          },
+          type: QueryTypes.UPDATE,
+        }
+      );
+    } else if (req.body.isNewImage === "false") {
+      teacherPhotoDir = "";
+      console.log("false");
+      const updTeacherDb = await db.query(
+        "UPDATE teachers SET teacher_name = :teacherName, teacher_matpel = :teacherMatpel, teacher_status = :teacherStatus WHERE teacher_id = :teacherId",
+        {
+          replacements: {
+            teacherId: teacherId,
+            teacherName: teacherName,
+            teacherMatpel: teacherMatpel,
+            teacherStatus: teacherStatus,
+          },
+          type: QueryTypes.UPDATE,
+        }
+      );
+    }
+    res.status(200).json({ message: "data success sended to server" });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Delete current image
+export const deleteCurrImgTeacher = async (req, res) => {
+  try {
+    const teacherImg = req.query.teacher_img;
+    const teacherId = req.query.teacher_id;
+
+    const deleteImgDb = await db.query(
+      "UPDATE teachers SET teacher_photo_dir = '' WHERE teacher_id = :teacherId AND teacher_photo_dir = :teacherImg ",
+      {
+        replacements: { teacherImg: teacherImg, teacherId: teacherId },
+        type: QueryTypes.UPDATE,
+      }
+    );
+    fs.unlink(teacherImg, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+    res.status(200).json({ message: "data success sended to server" });
   } catch (error) {
     console.log(error);
   }

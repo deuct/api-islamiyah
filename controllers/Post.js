@@ -235,7 +235,7 @@ export const insertPost = async (req, res) => {
       post_type: req.body.data.postType,
       post_shortdesc: req.body.data.postShortDesc,
       post_desc: req.body.data.postDesc,
-      createdAt: req.body.data.postDate,
+      createdAt: req.body.data.createdAt,
     });
     res.status(201).json({
       message: "success added new post",
@@ -246,6 +246,34 @@ export const insertPost = async (req, res) => {
   }
   console.log(req.body.data);
   console.log(req.body.data.postCode);
+};
+
+// Update post
+export const updatePost = async (req, res) => {
+  const postId = req.body.data.postCode;
+  const postName = req.body.data.postTitle;
+  const postStatus = req.body.data.postStatus;
+  const postType = req.body.data.postType;
+  const postShortDesc = req.body.data.postShortDesc;
+  const postDesc = req.body.data.postDesc;
+  const updatedAt = req.body.data.updatedAt;
+
+  const updatePostDb = await db.query(
+    "UPDATE post SET post_name = :postName, post_status = :postStatus, post_type = :postType, post_shortdesc = :postShortDesc, post_desc = :postDesc, updatedAt = :updatedAt WHERE post_id = :postId",
+    {
+      replacements: {
+        postId: postId,
+        postName: postName,
+        postStatus: postStatus,
+        postType: postType,
+        postShortDesc: postShortDesc,
+        postDesc: postDesc,
+        updatedAt: updatedAt,
+      },
+      type: QueryTypes.UPDATE,
+    }
+  );
+  res.status(201).json({ message: "success send data" });
 };
 
 // Delete Single Post
@@ -286,6 +314,7 @@ export const deleteImgPost = async (req, res) => {
         type: QueryTypes.SELECT,
       }
     );
+
     getImgDelete.map((imgdir) => {
       console.log(imgdir.imgpost_dir);
       fs.unlink(imgdir.imgpost_dir, (err) => {
@@ -294,9 +323,48 @@ export const deleteImgPost = async (req, res) => {
         }
       });
     });
+
+    const delImgDatabase = await db.query(
+      "DELETE FROM imgpost WHERE imgpost_for = :idImg",
+      { replacements: { idImg: idImg }, type: QueryTypes.DELETE }
+    );
+
     res.status(201).json({
       message: "success deleted image post",
     });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Delete current image
+export const delCurrImgPost = async (req, res) => {
+  try {
+    const idPostImg = req.query.imgpost_for;
+    const imgDir = req.query.image_dir;
+
+    console.log("==================");
+    console.log(idPostImg);
+    console.log(imgDir);
+    const delImgDatabase = await db.query(
+      "DELETE FROM imgpost WHERE imgpost_dir = :imgDir AND imgpost_for = :idPostImg",
+      {
+        replacements: {
+          imgDir: imgDir,
+          idPostImg: idPostImg,
+        },
+        type: QueryTypes.DELETE,
+      }
+    );
+
+    fs.unlink(imgDir, (err) => {
+      if (err) {
+        console.log("===error image delete from folder===");
+        console.log(err);
+      }
+    });
+
+    res.status(201).json({ message: "successfully delete image" });
   } catch (error) {
     console.log(error);
   }
