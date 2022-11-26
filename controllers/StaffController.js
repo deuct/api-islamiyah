@@ -230,11 +230,13 @@ export const deleteCurrImg = async (req, res) => {
         type: QueryTypes.UPDATE,
       }
     );
+
     fs.unlink(staffImg, (err) => {
       if (err) {
         console.log(err);
       }
     });
+
     res.status(200).json({ message: "data success sended to server" });
   } catch (error) {
     console.log(error);

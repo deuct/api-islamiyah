@@ -26,6 +26,9 @@ const Posts = db.define(
     post_desc: {
       type: DataTypes.TEXT,
     },
+    post_slug: {
+      type: DataTypes.STRING,
+    },
   },
   {
     freezeTableName: true,

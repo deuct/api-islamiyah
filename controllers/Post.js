@@ -47,7 +47,7 @@ export const getPostSecond = async (req, res) => {
       const totalPage = Math.ceil(totalRowsRes / limit);
 
       const result = await db.query(
-        "SELECT post.post_id, post.post_name, post.post_type, post.post_shortdesc, post.post_desc, post.createdAt,imgpost.imgpost_for, imgpost.imgpost_dir FROM post LEFT JOIN imgpost ON imgpost.imgpost_for = post.post_id WHERE post.post_name LIKE :search AND post.post_status = 'posted' GROUP BY post.post_id ORDER BY post.createdAt LIMIT :limit OFFSET :offset",
+        "SELECT post.post_id, post.post_name, post.post_type, post.post_shortdesc, post.post_desc, post.createdAt, post.post_slug ,imgpost.imgpost_for, imgpost.imgpost_dir FROM post LEFT JOIN imgpost ON imgpost.imgpost_for = post.post_id WHERE post.post_name LIKE :search AND post.post_status = 'posted' GROUP BY post.post_id ORDER BY post.createdAt LIMIT :limit OFFSET :offset",
         {
           replacements: {
             search: "%" + search + "%",
@@ -82,7 +82,7 @@ export const getPostSecond = async (req, res) => {
       const totalPage = Math.ceil(totalRowsRes / limit);
 
       const result = await db.query(
-        "SELECT post.post_id, post.post_name, post.post_type, post.post_shortdesc, post.post_desc, post.createdAt,imgpost.imgpost_for, imgpost.imgpost_dir FROM post LEFT JOIN imgpost ON imgpost.imgpost_for = post.post_id WHERE post.post_name LIKE :search AND post.post_type = :postType AND post.post_status = 'posted' GROUP BY post.post_id ORDER BY post.createdAt LIMIT :limit OFFSET :offset",
+        "SELECT post.post_id, post.post_name, post.post_type, post.post_shortdesc, post.post_desc, post.createdAt, post.post_slug, imgpost.imgpost_for, imgpost.imgpost_dir FROM post LEFT JOIN imgpost ON imgpost.imgpost_for = post.post_id WHERE post.post_name LIKE :search AND post.post_type = :postType AND post.post_status = 'posted' GROUP BY post.post_id ORDER BY post.createdAt LIMIT :limit OFFSET :offset",
         {
           replacements: {
             search: "%" + search + "%",
@@ -116,6 +116,21 @@ export const getOnePost = async (req, res) => {
       }
     );
     res.json(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Get id post by slug
+export const getPostBySlug = async (req, res) => {
+  try {
+    const postSlug = req.body.postSlug;
+    // console.log(postSlug);
+    const result = await db.query(
+      "SELECT post_id FROM post WHERE post_slug = :postSlug",
+      { type: QueryTypes.SELECT, replacements: { postSlug: postSlug } }
+    );
+    res.status(200).json(result);
   } catch (error) {
     console.log(error);
   }
@@ -234,6 +249,7 @@ export const insertPost = async (req, res) => {
       post_status: req.body.data.postStatus,
       post_type: req.body.data.postType,
       post_shortdesc: req.body.data.postShortDesc,
+      post_slug: req.body.data.postSlug,
       post_desc: req.body.data.postDesc,
       createdAt: req.body.data.createdAt,
     });
@@ -244,8 +260,6 @@ export const insertPost = async (req, res) => {
   } catch (error) {
     console.log(error);
   }
-  console.log(req.body.data);
-  console.log(req.body.data.postCode);
 };
 
 // Update post
@@ -255,11 +269,12 @@ export const updatePost = async (req, res) => {
   const postStatus = req.body.data.postStatus;
   const postType = req.body.data.postType;
   const postShortDesc = req.body.data.postShortDesc;
+  const postSlug = req.body.data.postSlug;
   const postDesc = req.body.data.postDesc;
   const updatedAt = req.body.data.updatedAt;
 
   const updatePostDb = await db.query(
-    "UPDATE post SET post_name = :postName, post_status = :postStatus, post_type = :postType, post_shortdesc = :postShortDesc, post_desc = :postDesc, updatedAt = :updatedAt WHERE post_id = :postId",
+    "UPDATE post SET post_name = :postName, post_status = :postStatus, post_type = :postType, post_shortdesc = :postShortDesc, post_desc = :postDesc, post_slug = :postSlug, updatedAt = :updatedAt WHERE post_id = :postId",
     {
       replacements: {
         postId: postId,
@@ -268,6 +283,7 @@ export const updatePost = async (req, res) => {
         postType: postType,
         postShortDesc: postShortDesc,
         postDesc: postDesc,
+        postSlug: postSlug,
         updatedAt: updatedAt,
       },
       type: QueryTypes.UPDATE,
