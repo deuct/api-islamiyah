@@ -203,6 +203,11 @@ const uploadProgramPrestasi = multer({ storage: storageProgramPrestasi });
 
 const router = express.Router();
 
+// Welcome
+app.get("/welcome", (req, res) => {
+  res.send("welcome!");
+});
+
 // Users, Authorization
 router.get("/users/", verifyToken, getUsers);
 router.post("/login/", Login);

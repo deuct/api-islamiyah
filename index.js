@@ -12,7 +12,7 @@ const app = express();
 app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 app.use(cookieParser());
 app.use(express.json()); //to make express can use JSON format
-const port = 5000;
+const port = 8080;
 app.use(router);
 app.use("/images", express.static("images"));
 
